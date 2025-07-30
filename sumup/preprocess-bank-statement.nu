@@ -13,13 +13,13 @@ def main [
 ] {
   open $file
     | each {|row|
-      let date = $row | get "Transaction date" | into datetime --format '%d/%m/%Y, %H:%M' | format date '%Y-%m-%d'
-      mut notes = [($row | get 'Transaction code')]
-      let reference = ($row | get 'Reference')
+      let date = $row | get "Datum der Transaktion" | into datetime --format '%d.%m.%y, %H:%M' | format date '%Y-%m-%d'
+      mut notes = [($row | get 'Transaktions-ID')]
+      let reference = ($row | get 'Referenz')
       if $reference != '' {
         $notes = $notes | append [$reference]
       }
-      let payment_reference = ($row | get 'Payment reference')
+      let payment_reference = ($row | get 'Zahlungsreferenz')
       if $payment_reference != '' {
         $notes = $notes | append [$payment_reference]
       }
@@ -27,14 +27,14 @@ def main [
         date:  $date
         description: ($notes | str join " - ")
       }
-      match ($row | get "Transaction type") {
-        "SumUp pay-in" => {
+      match ($row | get "Art der Transaktion") {
+        "SumUp Einzahlung" => {
           account: "SumUp"
-          value: ($row | get "Transaction amount in")
+          value: ($row | get "Rechnungsbetrag eingehend")
         }
-        "Outgoing bank transfer" => {
-          account: $row.Reference
-          value: (($row | get "Transaction amount out") * -1)
+        "Ausgehende Banküberweisung" => {
+          account: $row.Referenz
+          value: (($row | get "Rechnungsbetrag ausgehend") * -1)
         }
         _ => {}
       } | merge $common
